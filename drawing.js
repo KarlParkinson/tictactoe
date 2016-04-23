@@ -5,18 +5,6 @@ var Square = function(x, y, width) {
     this.occupied = false;
 };
 
-Square.prototype.draw = function(ctx) {
-    ctx.beginPath();
-    ctx.moveTo(this.x + this.width, this.y);
-    ctx.lineTo(this.x + this.width, this.y + this.width);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(this.x, this.y + this.width);
-    ctx.lineTo(this.x + this.width, this.y + this.width);
-    ctx.stroke();
-};
-
 Square.prototype.drawX = function(ctx) {
     var midpoint = {
 	x: this.x + this.width/2,

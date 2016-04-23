@@ -1,3 +1,94 @@
+var Square = function(x, y, width) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.occupied = false;
+};
+
+Square.prototype.drawX = function(ctx) {
+    var midpoint = {
+	x: this.x + this.width/2,
+	y: this.y + this.width/2
+    };
+
+    ctx.beginPath();
+    ctx.moveTo(midpoint.x - 50, midpoint.y - 50);
+    ctx.lineTo(midpoint.x + 50, midpoint.y + 50);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(midpoint.x + 50, midpoint.y - 50);
+    ctx.lineTo(midpoint.x - 50, midpoint.y + 50);
+    ctx.stroke();
+    this.occupied = true;
+};
+
+Square.prototype.drawO = function(ctx) {
+    var midpoint = {
+	x: this.x + this.width/2,
+	y: this.y + this.width/2
+    };
+    
+    ctx.beginPath();
+    ctx.arc(midpoint.x, midpoint.y, 50, 0, 2 * Math.PI, false);
+    ctx.stroke();
+    this.occupied = true;
+};
+
+Square.prototype.handleClick = function(click, ctx, symbol) {
+    if (this.occupied) {
+	return false;
+    } else {
+	if (this.x < click.x && (this.x + this.width) > click.x
+	    && this.y < click.y && (this.y + this.width) > click.y) {
+//	    this.occupied = true;
+//	    var rand = Math.floor((Math.random() * 10) + 1)
+//	    if (rand%2 === 0) {
+//		this.drawX(ctx);
+//	    } else {
+//		this.drawO(ctx);
+//	    }
+	    if (symbol === "X") {
+		this.drawX(ctx);
+	    } else {
+		this.drawO(ctx);
+	    }
+	    return true;
+	}
+    }
+};
+
+var initSquares = function(gridWidth, gridHeight, x, y, squares) {
+    for (var i = y; i < gridHeight; i = i + gridHeight/3) {
+	for (var j = x; j < gridWidth; j = j + gridWidth/3) {
+	    var square = new Square(j, i, gridWidth/3);
+	    squares.push(square);
+	}
+    }
+};
+
+var drawGrid = function(ctx) {
+    ctx.beginPath();
+    ctx.moveTo(300, 100);
+    ctx.lineTo(300, 700);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(500, 100);
+    ctx.lineTo(500, 700);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(100, 300);
+    ctx.lineTo(700, 300);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(100, 500);
+    ctx.lineTo(700, 500);
+    ctx.stroke();
+};
+
 var Board = function(squares, filledSquares) {
     this.squares = squares;
     this.filledSquares = filledSquares;
@@ -107,11 +198,6 @@ GameState.prototype.over = function() {
     }
 };
 
-GameState.prototype.print = function() {
-    this.board.print();
-};
-	    
-
 var Move = function(row, column) {
     this.row = row;
     this.column = column;
@@ -153,54 +239,71 @@ AIPlayer.prototype.minimax = function(game) {
     }
 };
 
-AIPlayer.prototype.takeTurn = function(game) {
+AIPlayer.prototype.takeTurn = function(game, squares, ctx) {
     this.minimax(game);
+    this.drawMove(squares, ctx);
     return game.makeMove(this.choiceMove);
 }
 
-var printScoresArr = function(arr) {
-    putstr("array is: ");
-    for (var i = 0; i < arr.length; i++) {
-	putstr(arr[i]);
-	putstr(",   ");
+AIPlayer.prototype.drawMove = function(squares, ctx) {
+    var square = squares[this.choiceMove.row*3 + this.choiceMove.column]
+    if (this.player === 'X') {
+	square.drawX(ctx);
+    } else {
+	square.drawO(ctx);
     }
-    putstr("\n");
 };
 
-var printMovesArr = function(arr) {
-    putstr("array is: ");
-    for (var i = 0; i < arr.length; i++) {
-	putstr(arr[i].row.toString() + "--" + arr[i].column.toString() + ",");
-    }
-    putstr("\n");
-}
+function play() {
+    var canvas = document.getElementById('cvs');
+    var ctx = canvas.getContext('2d');
+    var squares = [];
+    drawGrid(ctx);
+    initSquares(600, 600, 100, 100, squares);
 
-var play = function() {
-    var squares = [[" ", " ", " "],[" ", " ", " "],[" ", " ", " "]];
-    var game = new GameState(new Board(squares, 0), "X", "O");
+    var turn = "player";
+    var board = [[" ", " ", " "],[" ", " ", " "],[" ", " ", " "]];
+    var game = new GameState(new Board(board, 0), "X", "O");
     var compPlayer = new AIPlayer("O", "X");
-    game.print();
-    while (true) {
-	putstr("Human enter a move in x,y format: \n");
-	var move = readline().split(",");
-	game = game.makeMove(new Move(parseInt(move[0]), parseInt(move[1])));
-	game.print();
 
-	if (game.over()) {
-	    putstr("game over\n");
-	    break;
+//    console.log(game);
+//    console.log("");
+//    console.log(compPlayer);
+    
+    canvas.addEventListener('click', function(e) {
+	//console.log(turn);
+	//console.log(ctx);
+	if (turn === "AI") {
+	    return;
 	}
+	
+	var mouse = {
+	    x: e.pageX - canvas.offsetLeft,
+	    y: e.pageY - canvas.offsetTop
+	};
 
-	putstr("Computer making move\n");
-	game = compPlayer.takeTurn(game);
-	game.print();
-
-	if (game.over()) {
-	    putstr("game over\n");
-	    break;
+	for (var i = 0; i < squares.length; i++) {
+	    var handled = squares[i].handleClick(mouse, ctx, "X");
+	    if (handled) {
+		var row = Math.floor(i/3);
+		var column = i%3; 
+		console.log(i + ": " + row + "," +  column);
+		game = game.makeMove(new Move(row, column));
+		break;
+	    }
 	}
-    };
+//	console.log(game);
+	turn = "AI";
+	game = compPlayer.takeTurn(game, squares, ctx);
+	turn = "player";
+    });
+
+    //while (true) {
+//	if (turn === "player") {
+//	    continue;
+//	} else {
+//	    game = compPlayer.takeTurn(game);
+//	    turn = "Player";
+//	}
+  //  }
 };
-
-
-play();
