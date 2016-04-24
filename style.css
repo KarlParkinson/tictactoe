@@ -1,0 +1,13 @@
+canvas {
+    display: block; 
+    margin-left: auto; 
+    margin-right: auto;
+}
+
+header, footer {
+    text-align: center;
+}
+
+footer {
+    font-size: .8em;
+}

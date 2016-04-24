@@ -3,17 +3,20 @@
   <head>
     <meta charset="utf-8"/>
     <script type="text/javascript" src="tictactoe.js"></script>
-    <style type="text/css">
-      canvas {
-      display: block; 
-      margin-left: auto; 
-      margin-right: auto; }
-      <!--div.canvas-div { display: block; margin-left: auto; margin-right: auto; }-->
-    </style>
+    <link href="style.css" rel="stylesheet">
   </head>
   <body onload="play();">
-    <div class="canvas-div">
-      <canvas id="cvs" width="800" height="800"></canvas>
-    </div>
+    <header>
+      <h1> Tic Tac Toe </h1>
+      <p> You cannot beat me. I will even let you go first. </p>
+    </header>
+    <section>
+      <div class="canvas-div">
+	<canvas id="cvs" width="800" height="800"></canvas>
+      </div>
+    </section>
+    <footer>
+      By Karl Parkinson. Code available at <a href="https://github.com/KarlParkinson/tictactoe">Github</a>.
+    </footer>
   </body>
 </html>

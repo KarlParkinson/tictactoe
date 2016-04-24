@@ -209,38 +209,56 @@ var AIPlayer = function(player, opponent) {
     this.opponent = opponent; // "X" or "O"
 }
 
-AIPlayer.prototype.minimax = function(game) {
+AIPlayer.prototype.minimax = function(game, alpha, beta) {
     if (game.over()) {
 	return game.score(this.player, this.opponent);
     }
 
     var scores = [];
     var moves = [];
-
     var possibleMoves = game.getPossibleMoves();
-    for (var i = 0; i < possibleMoves.length; i++) {
-	var possible_game = game.makeMove(possibleMoves[i]);
-	scores.push(this.minimax(possible_game));
-	moves.push(possibleMoves[i]);
-    }
-
 
     if (game.player === this.player) {
+	var v = -Number.MAX_VALUE;
+	for (var i = 0; i < possibleMoves.length; i++) {
+	    var possible_game = game.makeMove(possibleMoves[i]);
+	    v = Math.max(v, this.minimax(possible_game, alpha, beta))
+	    scores.push(v);
+	    moves.push(possibleMoves[i]);
+	    alpha = Math.max(alpha, v);
+	    if (beta <= alpha) {
+		break;
+	    }
+	}
+	
 	// Max Calculation
 	var maxScoreIndex = scores.indexOf(Math.max.apply(null, scores));
 	this.choiceMove = moves[maxScoreIndex];
 	return scores[maxScoreIndex];
 	
     } else {
+	var v = Number.MAX_VALUE;
+	for (var i = 0; i < possibleMoves.length; i++) {
+	    var possible_game = game.makeMove(possibleMoves[i]);
+	    v = Math.min(v, this.minimax(possible_game, alpha, beta))
+	    scores.push(v);
+	    moves.push(possibleMoves[i]);
+	    beta = Math.min(beta, v);
+	    if (beta <= alpha) {
+		break;
+	    }
+	}	
+
 	// Min Calculation
 	var minScoreIndex = scores.indexOf(Math.min.apply(null, scores));
 	this.choiceMove = moves[minScoreIndex]
 	return scores[minScoreIndex];
     }
+
 };
 
 AIPlayer.prototype.takeTurn = function(game, squares, ctx) {
-    this.minimax(game);
+    this.minimax(game, -Number.MAX_VALUE, Number.MAX_VALUE);
     this.drawMove(squares, ctx);
     return game.makeMove(this.choiceMove);
 }
@@ -266,13 +284,7 @@ function play() {
     var game = new GameState(new Board(board, 0), "X", "O");
     var compPlayer = new AIPlayer("O", "X");
 
-//    console.log(game);
-//    console.log("");
-//    console.log(compPlayer);
-    
     canvas.addEventListener('click', function(e) {
-	//console.log(turn);
-	//console.log(ctx);
 	if (turn === "AI") {
 	    return;
 	}
@@ -292,18 +304,15 @@ function play() {
 		break;
 	    }
 	}
-//	console.log(game);
+	if (game.over()) {
+	    return;
+	}
 	turn = "AI";
 	game = compPlayer.takeTurn(game, squares, ctx);
+	if (game.over()) {
+	    return;
+	}
 	turn = "player";
     });
 
-    //while (true) {
-//	if (turn === "player") {
-//	    continue;
-//	} else {
-//	    game = compPlayer.takeTurn(game);
-//	    turn = "Player";
-//	}
-  //  }
 };
