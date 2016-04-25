@@ -41,13 +41,6 @@ Square.prototype.handleClick = function(click, ctx, symbol) {
     } else {
 	if (this.x < click.x && (this.x + this.width) > click.x
 	    && this.y < click.y && (this.y + this.width) > click.y) {
-//	    this.occupied = true;
-//	    var rand = Math.floor((Math.random() * 10) + 1)
-//	    if (rand%2 === 0) {
-//		this.drawX(ctx);
-//	    } else {
-//		this.drawO(ctx);
-//	    }
 	    if (symbol === "X") {
 		this.drawX(ctx);
 	    } else {
@@ -198,6 +191,7 @@ GameState.prototype.over = function() {
     }
 };
 
+
 var Move = function(row, column) {
     this.row = row;
     this.column = column;
@@ -272,6 +266,17 @@ AIPlayer.prototype.drawMove = function(squares, ctx) {
     }
 };
 
+function handleEndGame(game) {
+    var winner = document.getElementById('winner');
+    if (game.win("X")) {
+	winner.innerHTML = "You win. Click to play again.";
+    } else if (game.win("O")) {
+	winner.innerHTML = "I win. Click to play again.";
+    } else {
+	winner.innerHTML = "Draw. Click to play again.";
+    }
+};
+
 function play() {
     var canvas = document.getElementById('cvs');
     var ctx = canvas.getContext('2d');
@@ -279,23 +284,28 @@ function play() {
     drawGrid(ctx);
     initSquares(600, 600, 100, 100, squares);
 
-    var turn = "player";
     var board = [[" ", " ", " "],[" ", " ", " "],[" ", " ", " "]];
     var game = new GameState(new Board(board, 0), "X", "O");
     var compPlayer = new AIPlayer("O", "X");
+    
+    var reset = false;
+    var rejectClick = false;
 
     canvas.addEventListener('click', function(e) {
-	if (turn === "AI") {
-	    return;
+	if (reset) {
+	    window.location.reload(false);
 	}
+
 	
 	var mouse = {
 	    x: e.pageX - canvas.offsetLeft,
 	    y: e.pageY - canvas.offsetTop
 	};
 
+	var handled = false;
+
 	for (var i = 0; i < squares.length; i++) {
-	    var handled = squares[i].handleClick(mouse, ctx, "X");
+	    handled = squares[i].handleClick(mouse, ctx, "X");
 	    if (handled) {
 		var row = Math.floor(i/3);
 		var column = i%3; 
@@ -304,15 +314,22 @@ function play() {
 		break;
 	    }
 	}
-	if (game.over()) {
-	    return;
+
+	if (!handled) {
+	    return false;
 	}
-	turn = "AI";
+
+	if (game.over()) {
+	    handleEndGame(game);
+	    reset = true;
+	    return false;
+	}
 	game = compPlayer.takeTurn(game, squares, ctx);
 	if (game.over()) {
-	    return;
+	    handleEndGame(game);
+	    reset = true;
+	    return false;
 	}
-	turn = "player";
     });
 
 };

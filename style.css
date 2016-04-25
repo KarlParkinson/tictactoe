@@ -11,3 +11,7 @@ header, footer {
 footer {
     font-size: .8em;
 }
+
+#winner {
+    margin-bottom: 0;
+}
