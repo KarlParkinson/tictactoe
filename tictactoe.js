@@ -321,23 +321,32 @@ function drawGrid(ctx, width, height) {
 
 // Initialize the squares in the tictactoe grid and push them
 // into the squares array.
-function initSquares(gridWidth, gridHeight, x, y, squares) {
+function initSquares(gridWidth, gridHeight, x, y) {
+    var squares = [];
     for (var i = y; i < gridHeight; i = i + gridHeight/3) {
         for (var j = x; j < gridWidth; j = j + gridWidth/3) {
             var square = new Square(j, i, gridWidth/3);
             squares.push(square);
         }
     }
+    return squares;
 }
 
-function play() {
-    var canvas = document.getElementById('cvs');
+// initalize grid and squares
+function init(canvas, ctx) {
+    var squares;
     var width = canvas.width;
     var height = canvas.height;
-    var ctx = canvas.getContext('2d');
-    var squares = [];
     drawGrid(ctx, width, height);
-    initSquares(width, height, 0, 0, squares);
+    squares = initSquares(width, height, 0, 0);
+    return squares;
+}    
+
+// main function called when page is loaded
+function play() {
+    var canvas = document.getElementById('cvs');
+    var ctx = canvas.getContext('2d');
+    var squares = init(canvas, ctx);
 
     var board = [[" ", " ", " "],[" ", " ", " "],[" ", " ", " "]];
     var game = new GameState(new Board(board, 0), "X", "O");
@@ -348,6 +357,7 @@ function play() {
     canvas.addEventListener('click', function(e) {
         if (reset) {
             window.location.reload(false);
+            return false;
         }
 
         var mouse = {
