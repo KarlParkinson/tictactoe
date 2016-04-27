@@ -1,3 +1,5 @@
+"use strict";
+
 // Encapsulation of a square on the tictactoe grid
 var Square = function(x, y, width) {
     this.x = x;
@@ -10,8 +12,8 @@ var Square = function(x, y, width) {
 // TODO: refactor magic numbers out as much as possible
 Square.prototype.drawX = function(ctx) {
     var midpoint = {
-	x: this.x + this.width/2,
-	y: this.y + this.width/2
+        x: this.x + this.width / 2,
+        y: this.y + this.width / 2
     };
 
     ctx.beginPath();
@@ -30,8 +32,8 @@ Square.prototype.drawX = function(ctx) {
 // TODO: refactor magic numbers out as much as possible
 Square.prototype.drawO = function(ctx) {
     var midpoint = {
-	x: this.x + this.width/2,
-	y: this.y + this.width/2
+        x: this.x + this.width / 2,
+        y: this.y + this.width / 2
     };
     
     ctx.beginPath();
@@ -43,17 +45,15 @@ Square.prototype.drawO = function(ctx) {
 // Check if the click event occured in this square
 Square.prototype.handleClick = function(click, ctx, symbol) {
     if (this.occupied) {
-	return false;
-    } else {
-	if (this.x < click.x && (this.x + this.width) > click.x
-	    && this.y < click.y && (this.y + this.width) > click.y) {
-	    if (symbol === "X") {
-		this.drawX(ctx);
-	    } else {
-		this.drawO(ctx);
-	    }
-	    return true;
-	}
+        return false;
+    }
+    if (this.x < click.x && (this.x + this.width) > click.x && this.y < click.y && (this.y + this.width) > click.y) {
+        if (symbol === "X") {
+            this.drawX(ctx);
+        } else {
+            this.drawO(ctx);
+        }
+        return true;
     }
 };
 
@@ -66,21 +66,14 @@ var Board = function(squares, filledSquares) {
 // Fill the appropriate entry in squares with either 'X' or 'O'
 Board.prototype.makeMove = function(move, player) {
     this.squares[move.row][move.column] = player;
-    this.filledSquares++;
+    this.filledSquares = this.filledSquares + 1;
 };
 
-// Print the board
-Board.prototype.print = function() {
-    putstr("\n");
-    for (var i = 0; i < this.squares.length; i++) {
-	for (var j = 0; j < this.squares.length; j++) {
-	    putstr(this.squares[i][j]);
-	    putstr(" | ");
-	}
-	putstr("\n");
-    }
-    putstr("\n");
-};
+// Undo a move. Replace the appropriate entry with " "
+Board.prototype.undoMove = function(move) {
+    this.squares[move.row][move.column] = " ";
+    this.filledSquares = this.filledSquares - 1;
+}
 
 // Represent a state of the game. Contains a Board, and strings representing the player
 // and enemy in the state respectively.
@@ -91,23 +84,36 @@ var GameState = function(board, player, enemy) {
 };
 
 // Make a move. Creates an update board, and returns a new GameState with the updated board and the player and enemy roles switched.
-// TODO: Do I need to create new Board and GameState objects, or can I just update existing?
 GameState.prototype.makeMove = function(move) {
-    var newBoard = new Board(JSON.parse(JSON.stringify(this.board.squares)), this.board.filledSquares);
-    newBoard.makeMove(move, this.player);
-    return new GameState(newBoard, this.enemy, this.player);
+    // leaving commented out code in as record of old solution where a new object was created every time.
+    //var newBoard = new Board(JSON.parse(JSON.stringify(this.board.squares)), this.board.filledSquares);
+    //newBoard.makeMove(move, this.player);
+    //return new GameState(newBoard, this.enemy, this.player);
+    var temp;
+    this.board.makeMove(move, this.player);
+    temp = this.player;
+    this.player = this.enemy;
+    this.enemy = temp;
 };
 
+// Undo a move
+GameState.prototype.undoMove = function(move) {
+    var temp;
+    this.board.undoMove(move);
+    temp = this.player;
+    this.player = this.enemy;
+    this.enemy = temp;
+};
 
 // Returns a list of all possible moves in this GameState
-GameState.prototype.getPossibleMoves = function () {
-    possibleMoves = []
+GameState.prototype.getPossibleMoves = function() {
+    var possibleMoves = [];
     for (var i = 0; i < this.board.squares.length; i++) {
-	for (var j = 0; j < this.board.squares.length; j++) {
-	    if (this.board.squares[i][j] === " ") {
-		possibleMoves.push(new Move(i,j));
-	    }
-	}
+        for (var j = 0; j < this.board.squares.length; j++) {
+            if (this.board.squares[i][j] === " ") {
+                possibleMoves.push(new Move(i,j));
+            }
+        }
     }
     return possibleMoves;
 };
@@ -115,33 +121,33 @@ GameState.prototype.getPossibleMoves = function () {
 // Returns the score of the GameState.
 GameState.prototype.score = function(player, opponent) {
     if (this.win(player)) {
-	return 10;
+        return 10;
     } else if (this.win(opponent)) {
-	return -10;
+        return -10;
     } else {
-	return 0;
+        return 0;
     }
 };
 
 // Checks if player has won this GameState
 GameState.prototype.win = function(player) {
     if (this.rowWin(player)) {
-	return true;
+        return true;
     } else if (this.columnWin(player)) {
-	return true;
+        return true;
     } else if (this.diagonalWin(player)) {
-	return true;
+        return true;
     } else {
-	return false;
+        return false;
     }
 };
 
 // Check for row win
 GameState.prototype.rowWin = function(player) {
-    for (var i = 0; i < this.board.squares.length; i++) {	
-	if (this.board.squares[i][0] === player && this.board.squares[i][1] === player && this.board.squares[i][2] === player) {
-	    return true;
-	}
+    for (var i = 0; i < this.board.squares.length; i++) {       
+        if (this.board.squares[i][0] === player && this.board.squares[i][1] === player && this.board.squares[i][2] === player) {
+            return true;
+        }
     }
     return false;
 };
@@ -149,9 +155,9 @@ GameState.prototype.rowWin = function(player) {
 // Check for column win
 GameState.prototype.columnWin = function(player) {
     for (var i = 0; i < this.board.squares.length; i++) {
-	if (this.board.squares[0][i] === player && this.board.squares[1][i] === player && this.board.squares[2][i] === player) {
-	    return true;
-	}
+        if (this.board.squares[0][i] === player && this.board.squares[1][i] === player && this.board.squares[2][i] === player) {
+            return true;
+        }
     }
     return false;
 };
@@ -159,24 +165,24 @@ GameState.prototype.columnWin = function(player) {
 // Check for diagonal win
 GameState.prototype.diagonalWin = function(player) {
     if (this.board.squares[0][0] === player && this.board.squares[1][1] === player && this.board.squares[2][2] === player) {
-	return true;
+        return true;
     } else if (this.board.squares[2][0] === player && this.board.squares[1][1] === player && this.board.squares[0][2] === player) {
-	return true;
+        return true;
     } else {
-	return false;
+        return false;
     }
 };
 
 // Check if the GameState is an over state
 GameState.prototype.over = function() {
     if (this.win("X")) {
-	return true;
+        return true;
     } else if (this.win("O")) {
-	return true;
+        return true;
     } else if (this.board.filledSquares === Math.pow(this.board.squares.length, 2)) {
-	return true;
+        return true;
     } else {
-	return false;
+        return false;
     }
 };
 
@@ -192,7 +198,7 @@ var Move = function(row, column) {
 var AIPlayer = function(player, opponent) {
     this.player = player; // "X" or "O"
     this.opponent = opponent; // "X" or "O"
-}
+};
 
 // Simple minimax algorithm using alpha-beta pruning. Good explanation of alpha-beta
 // at https://www.youtube.com/watch?v=xBXHtz4Gbdo
@@ -200,52 +206,56 @@ var AIPlayer = function(player, opponent) {
 // at https://en.wikipedia.org/wiki/Minimax#Combinatorial_game_theory
 AIPlayer.prototype.minimax = function(game, alpha, beta) {
     if (game.over()) {
-	return game.score(this.player, this.opponent);
+        return game.score(this.player, this.opponent);
     }
 
     var scores = [];
     var moves = [];
     var possibleMoves = game.getPossibleMoves();
+    var v;
+    var possible_game;
 
     // The AI wants to maximize its score, so is the maximizing player.
     if (game.player === this.player) {
-	var v = -Number.MAX_VALUE;
-	for (var i = 0; i < possibleMoves.length; i++) {
-	    var possible_game = game.makeMove(possibleMoves[i]);
-	    v = Math.max(v, this.minimax(possible_game, alpha, beta))
-	    scores.push(v);
-	    moves.push(possibleMoves[i]);
-	    alpha = Math.max(alpha, v);
-	    // can prune this branch
-	    if (beta <= alpha) {
-		break;
-	    }
-	}
-	
-	// Max Calculation
-	var maxScoreIndex = scores.indexOf(Math.max.apply(null, scores));
-	this.choiceMove = moves[maxScoreIndex];
-	return scores[maxScoreIndex];
-	
+        v = -Number.MAX_VALUE;
+        for (var i = 0; i < possibleMoves.length; i++) {
+            game.makeMove(possibleMoves[i]);
+            v = Math.max(v, this.minimax(game, alpha, beta));
+            game.undoMove(possibleMoves[i]);
+            scores.push(v);
+            moves.push(possibleMoves[i]);
+            alpha = Math.max(alpha, v);
+            // can prune this branch
+            if (beta <= alpha) {
+                break;
+            }
+        }
+        
+        // Max Calculation
+        var maxScoreIndex = scores.indexOf(Math.max.apply(null, scores));
+        this.choiceMove = moves[maxScoreIndex];
+        return scores[maxScoreIndex];
+        
     } else {
-	// AI wants to minimize opponent score, so is the minimum calculation
-	var v = Number.MAX_VALUE;
-	for (var i = 0; i < possibleMoves.length; i++) {
-	    var possible_game = game.makeMove(possibleMoves[i]);
-	    v = Math.min(v, this.minimax(possible_game, alpha, beta))
-	    scores.push(v);
-	    moves.push(possibleMoves[i]);
-	    beta = Math.min(beta, v);
-	    // can prune this branch
-	    if (beta <= alpha) {
-		break;
-	    }
-	}	
+        // AI wants to minimize opponent score, so is the minimum calculation
+        v = Number.MAX_VALUE;
+        for (var i = 0; i < possibleMoves.length; i++) {
+            game.makeMove(possibleMoves[i]);
+            v = Math.min(v, this.minimax(game, alpha, beta));
+            game.undoMove(possibleMoves[i]);
+            scores.push(v);
+            moves.push(possibleMoves[i]);
+            beta = Math.min(beta, v);
+            // can prune this branch
+            if (beta <= alpha) {
+                break;
+            }
+        }       
 
-	// Min Calculation
-	var minScoreIndex = scores.indexOf(Math.min.apply(null, scores));
-	this.choiceMove = moves[minScoreIndex]
-	return scores[minScoreIndex];
+        // Min Calculation
+        var minScoreIndex = scores.indexOf(Math.min.apply(null, scores));
+        this.choiceMove = moves[minScoreIndex];
+        return scores[minScoreIndex];
     }
 
 };
@@ -254,16 +264,16 @@ AIPlayer.prototype.minimax = function(game, alpha, beta) {
 AIPlayer.prototype.takeTurn = function(game, squares, ctx) {
     this.minimax(game, -Number.MAX_VALUE, Number.MAX_VALUE);
     this.drawMove(squares, ctx);
-    return game.makeMove(this.choiceMove);
-}
+    game.makeMove(this.choiceMove);
+};
 
 // Draw the move made by the AI player
 AIPlayer.prototype.drawMove = function(squares, ctx) {
-    var square = squares[this.choiceMove.row*3 + this.choiceMove.column]
+    var square = squares[this.choiceMove.row*3 + this.choiceMove.column];
     if (this.player === 'X') {
-	square.drawX(ctx);
+        square.drawX(ctx);
     } else {
-	square.drawO(ctx);
+        square.drawO(ctx);
     }
 };
 
@@ -271,56 +281,63 @@ AIPlayer.prototype.drawMove = function(squares, ctx) {
 function handleEndGame(game) {
     var winner = document.getElementById('winner');
     if (game.win("X")) {
-	winner.innerHTML = "You win. Click to play again.";
+        winner.innerHTML = "You win. Click to play again.";
     } else if (game.win("O")) {
-	winner.innerHTML = "I win. Click to play again.";
+        winner.innerHTML = "I win. Click to play again.";
     } else {
-	winner.innerHTML = "Draw. Click to play again.";
+        winner.innerHTML = "Draw. Click to play again.";
     }
-};
+}
 
 // Draws the tictactoe grid. 
-// TODO: Should refactor magic numbers, and instead pass in canvas
-// width and height and use those to calculate where to draw lines.
-function drawGrid(ctx) {
+function drawGrid(ctx, width, height) {
+    var squareWidth;
+    var squareHeight;
+
+    squareWidth = Math.floor(width/3);
+    squareHeight = Math.floor(height/3);
+
+
     ctx.beginPath();
-    ctx.moveTo(300, 100);
-    ctx.lineTo(300, 700);
+    ctx.moveTo(squareWidth, 0);
+    ctx.lineTo(squareWidth, height);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(500, 100);
-    ctx.lineTo(500, 700);
+    ctx.moveTo(squareWidth*2, 0);
+    ctx.lineTo(squareWidth*2, height);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(100, 300);
-    ctx.lineTo(700, 300);
+    ctx.moveTo(0, squareHeight);
+    ctx.lineTo(width, squareHeight);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(100, 500);
-    ctx.lineTo(700, 500);
+    ctx.moveTo(0, squareHeight*2);
+    ctx.lineTo(width, squareHeight*2);
     ctx.stroke();
-};
+}
 
 // Initialize the squares in the tictactoe grid and push them
 // into the squares array.
 function initSquares(gridWidth, gridHeight, x, y, squares) {
     for (var i = y; i < gridHeight; i = i + gridHeight/3) {
-	for (var j = x; j < gridWidth; j = j + gridWidth/3) {
-	    var square = new Square(j, i, gridWidth/3);
-	    squares.push(square);
-	}
+        for (var j = x; j < gridWidth; j = j + gridWidth/3) {
+            var square = new Square(j, i, gridWidth/3);
+            squares.push(square);
+        }
     }
-};
+}
 
 function play() {
     var canvas = document.getElementById('cvs');
+    var width = canvas.width;
+    var height = canvas.height;
     var ctx = canvas.getContext('2d');
     var squares = [];
-    drawGrid(ctx);
-    initSquares(600, 600, 100, 100, squares);
+    drawGrid(ctx, width, height);
+    initSquares(width, height, 0, 0, squares);
 
     var board = [[" ", " ", " "],[" ", " ", " "],[" ", " ", " "]];
     var game = new GameState(new Board(board, 0), "X", "O");
@@ -329,43 +346,42 @@ function play() {
     var reset = false;
 
     canvas.addEventListener('click', function(e) {
-	if (reset) {
-	    window.location.reload(false);
-	}
+        if (reset) {
+            window.location.reload(false);
+        }
 
-	var mouse = {
-	    x: e.pageX - canvas.offsetLeft,
-	    y: e.pageY - canvas.offsetTop
-	};
+        var mouse = {
+            x: e.pageX - canvas.offsetLeft,
+            y: e.pageY - canvas.offsetTop
+        };
 
-	var handled = false;
+        var handled = false;
 
-	for (var i = 0; i < squares.length; i++) {
-	    handled = squares[i].handleClick(mouse, ctx, "X");
-	    if (handled) {
-		var row = Math.floor(i/3);
-		var column = i%3; 
-		console.log(i + ": " + row + "," +  column);
-		game = game.makeMove(new Move(row, column));
-		break;
-	    }
-	}
+        for (var i = 0; i < squares.length; i++) {
+            handled = squares[i].handleClick(mouse, ctx, "X");
+            if (handled) {
+                var row = Math.floor(i/3);
+                var column = i%3; 
+                game.makeMove(new Move(row, column));
+                break;
+            }
+        }
 
-	if (!handled) {
-	    return false;
-	}
+        if (!handled) {
+            return false;
+        }
 
-	if (game.over()) {
-	    handleEndGame(game);
-	    reset = true;
-	    return false;
-	}
-	game = compPlayer.takeTurn(game, squares, ctx);
-	if (game.over()) {
-	    handleEndGame(game);
-	    reset = true;
-	    return false;
-	}
+        if (game.over()) {
+            handleEndGame(game);
+            reset = true;
+            return false;
+        }
+        compPlayer.takeTurn(game, squares, ctx);
+        if (game.over()) {
+            handleEndGame(game);
+            reset = true;
+            return false;
+        }
     });
 
-};
+}
