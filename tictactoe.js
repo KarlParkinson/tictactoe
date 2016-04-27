@@ -1,3 +1,4 @@
+// Encapsulation of a square on the tictactoe grid
 var Square = function(x, y, width) {
     this.x = x;
     this.y = y;
@@ -5,6 +6,8 @@ var Square = function(x, y, width) {
     this.occupied = false;
 };
 
+// Draw an 'X' in the square.
+// TODO: refactor magic numbers out as much as possible
 Square.prototype.drawX = function(ctx) {
     var midpoint = {
 	x: this.x + this.width/2,
@@ -23,6 +26,8 @@ Square.prototype.drawX = function(ctx) {
     this.occupied = true;
 };
 
+// Draw an 'O' in the square
+// TODO: refactor magic numbers out as much as possible
 Square.prototype.drawO = function(ctx) {
     var midpoint = {
 	x: this.x + this.width/2,
@@ -35,6 +40,7 @@ Square.prototype.drawO = function(ctx) {
     this.occupied = true;
 };
 
+// Check if the click event occured in this square
 Square.prototype.handleClick = function(click, ctx, symbol) {
     if (this.occupied) {
 	return false;
@@ -51,25 +57,19 @@ Square.prototype.handleClick = function(click, ctx, symbol) {
     }
 };
 
-var initSquares = function(gridWidth, gridHeight, x, y, squares) {
-    for (var i = y; i < gridHeight; i = i + gridHeight/3) {
-	for (var j = x; j < gridWidth; j = j + gridWidth/3) {
-	    var square = new Square(j, i, gridWidth/3);
-	    squares.push(square);
-	}
-    }
-};
-
+// Represents the game board. squares is a 2d list of strings, which can be 'X', 'O' or ''.
 var Board = function(squares, filledSquares) {
     this.squares = squares;
     this.filledSquares = filledSquares;
 };
 
+// Fill the appropriate entry in squares with either 'X' or 'O'
 Board.prototype.makeMove = function(move, player) {
     this.squares[move.row][move.column] = player;
     this.filledSquares++;
 };
 
+// Print the board
 Board.prototype.print = function() {
     putstr("\n");
     for (var i = 0; i < this.squares.length; i++) {
@@ -82,12 +82,16 @@ Board.prototype.print = function() {
     putstr("\n");
 };
 
+// Represent a state of the game. Contains a Board, and strings representing the player
+// and enemy in the state respectively.
 var GameState = function(board, player, enemy) {
     this.board = board;
     this.player = player;
     this.enemy = enemy;
 };
 
+// Make a move. Creates an update board, and returns a new GameState with the updated board and the player and enemy roles switched.
+// TODO: Do I need to create new Board and GameState objects, or can I just update existing?
 GameState.prototype.makeMove = function(move) {
     var newBoard = new Board(JSON.parse(JSON.stringify(this.board.squares)), this.board.filledSquares);
     newBoard.makeMove(move, this.player);
@@ -95,6 +99,7 @@ GameState.prototype.makeMove = function(move) {
 };
 
 
+// Returns a list of all possible moves in this GameState
 GameState.prototype.getPossibleMoves = function () {
     possibleMoves = []
     for (var i = 0; i < this.board.squares.length; i++) {
@@ -107,6 +112,7 @@ GameState.prototype.getPossibleMoves = function () {
     return possibleMoves;
 };
 
+// Returns the score of the GameState.
 GameState.prototype.score = function(player, opponent) {
     if (this.win(player)) {
 	return 10;
@@ -117,6 +123,7 @@ GameState.prototype.score = function(player, opponent) {
     }
 };
 
+// Checks if player has won this GameState
 GameState.prototype.win = function(player) {
     if (this.rowWin(player)) {
 	return true;
@@ -129,6 +136,7 @@ GameState.prototype.win = function(player) {
     }
 };
 
+// Check for row win
 GameState.prototype.rowWin = function(player) {
     for (var i = 0; i < this.board.squares.length; i++) {	
 	if (this.board.squares[i][0] === player && this.board.squares[i][1] === player && this.board.squares[i][2] === player) {
@@ -138,6 +146,7 @@ GameState.prototype.rowWin = function(player) {
     return false;
 };
 
+// Check for column win
 GameState.prototype.columnWin = function(player) {
     for (var i = 0; i < this.board.squares.length; i++) {
 	if (this.board.squares[0][i] === player && this.board.squares[1][i] === player && this.board.squares[2][i] === player) {
@@ -147,6 +156,7 @@ GameState.prototype.columnWin = function(player) {
     return false;
 };
 
+// Check for diagonal win
 GameState.prototype.diagonalWin = function(player) {
     if (this.board.squares[0][0] === player && this.board.squares[1][1] === player && this.board.squares[2][2] === player) {
 	return true;
@@ -157,6 +167,7 @@ GameState.prototype.diagonalWin = function(player) {
     }
 };
 
+// Check if the GameState is an over state
 GameState.prototype.over = function() {
     if (this.win("X")) {
 	return true;
@@ -170,17 +181,23 @@ GameState.prototype.over = function() {
 };
 
 
+// Represent a move. Has a row and a column
 var Move = function(row, column) {
     this.row = row;
     this.column = column;
 };
 
 
+// The AI player which the user competes against
 var AIPlayer = function(player, opponent) {
     this.player = player; // "X" or "O"
     this.opponent = opponent; // "X" or "O"
 }
 
+// Simple minimax algorithm using alpha-beta pruning. Good explanation of alpha-beta
+// at https://www.youtube.com/watch?v=xBXHtz4Gbdo
+// Good explanation of the minimax algorithm in the context of games like tictactoe
+// at https://en.wikipedia.org/wiki/Minimax#Combinatorial_game_theory
 AIPlayer.prototype.minimax = function(game, alpha, beta) {
     if (game.over()) {
 	return game.score(this.player, this.opponent);
@@ -190,6 +207,7 @@ AIPlayer.prototype.minimax = function(game, alpha, beta) {
     var moves = [];
     var possibleMoves = game.getPossibleMoves();
 
+    // The AI wants to maximize its score, so is the maximizing player.
     if (game.player === this.player) {
 	var v = -Number.MAX_VALUE;
 	for (var i = 0; i < possibleMoves.length; i++) {
@@ -198,6 +216,7 @@ AIPlayer.prototype.minimax = function(game, alpha, beta) {
 	    scores.push(v);
 	    moves.push(possibleMoves[i]);
 	    alpha = Math.max(alpha, v);
+	    // can prune this branch
 	    if (beta <= alpha) {
 		break;
 	    }
@@ -209,6 +228,7 @@ AIPlayer.prototype.minimax = function(game, alpha, beta) {
 	return scores[maxScoreIndex];
 	
     } else {
+	// AI wants to minimize opponent score, so is the minimum calculation
 	var v = Number.MAX_VALUE;
 	for (var i = 0; i < possibleMoves.length; i++) {
 	    var possible_game = game.makeMove(possibleMoves[i]);
@@ -216,6 +236,7 @@ AIPlayer.prototype.minimax = function(game, alpha, beta) {
 	    scores.push(v);
 	    moves.push(possibleMoves[i]);
 	    beta = Math.min(beta, v);
+	    // can prune this branch
 	    if (beta <= alpha) {
 		break;
 	    }
@@ -229,12 +250,14 @@ AIPlayer.prototype.minimax = function(game, alpha, beta) {
 
 };
 
+// Take your turn, AI player.
 AIPlayer.prototype.takeTurn = function(game, squares, ctx) {
     this.minimax(game, -Number.MAX_VALUE, Number.MAX_VALUE);
     this.drawMove(squares, ctx);
     return game.makeMove(this.choiceMove);
 }
 
+// Draw the move made by the AI player
 AIPlayer.prototype.drawMove = function(squares, ctx) {
     var square = squares[this.choiceMove.row*3 + this.choiceMove.column]
     if (this.player === 'X') {
@@ -244,6 +267,7 @@ AIPlayer.prototype.drawMove = function(squares, ctx) {
     }
 };
 
+// Displays who won the game, or if it was a draw.
 function handleEndGame(game) {
     var winner = document.getElementById('winner');
     if (game.win("X")) {
@@ -255,6 +279,9 @@ function handleEndGame(game) {
     }
 };
 
+// Draws the tictactoe grid. 
+// TODO: Should refactor magic numbers, and instead pass in canvas
+// width and height and use those to calculate where to draw lines.
 function drawGrid(ctx) {
     ctx.beginPath();
     ctx.moveTo(300, 100);
@@ -277,6 +304,8 @@ function drawGrid(ctx) {
     ctx.stroke();
 };
 
+// Initialize the squares in the tictactoe grid and push them
+// into the squares array.
 function initSquares(gridWidth, gridHeight, x, y, squares) {
     for (var i = y; i < gridHeight; i = i + gridHeight/3) {
 	for (var j = x; j < gridWidth; j = j + gridWidth/3) {
