@@ -60,28 +60,6 @@ var initSquares = function(gridWidth, gridHeight, x, y, squares) {
     }
 };
 
-var drawGrid = function(ctx) {
-    ctx.beginPath();
-    ctx.moveTo(300, 100);
-    ctx.lineTo(300, 700);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(500, 100);
-    ctx.lineTo(500, 700);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(100, 300);
-    ctx.lineTo(700, 300);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(100, 500);
-    ctx.lineTo(700, 500);
-    ctx.stroke();
-};
-
 var Board = function(squares, filledSquares) {
     this.squares = squares;
     this.filledSquares = filledSquares;
@@ -277,6 +255,37 @@ function handleEndGame(game) {
     }
 };
 
+function drawGrid(ctx) {
+    ctx.beginPath();
+    ctx.moveTo(300, 100);
+    ctx.lineTo(300, 700);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(500, 100);
+    ctx.lineTo(500, 700);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(100, 300);
+    ctx.lineTo(700, 300);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(100, 500);
+    ctx.lineTo(700, 500);
+    ctx.stroke();
+};
+
+function initSquares(gridWidth, gridHeight, x, y, squares) {
+    for (var i = y; i < gridHeight; i = i + gridHeight/3) {
+	for (var j = x; j < gridWidth; j = j + gridWidth/3) {
+	    var square = new Square(j, i, gridWidth/3);
+	    squares.push(square);
+	}
+    }
+};
+
 function play() {
     var canvas = document.getElementById('cvs');
     var ctx = canvas.getContext('2d');
@@ -289,14 +298,12 @@ function play() {
     var compPlayer = new AIPlayer("O", "X");
     
     var reset = false;
-    var rejectClick = false;
 
     canvas.addEventListener('click', function(e) {
 	if (reset) {
 	    window.location.reload(false);
 	}
 
-	
 	var mouse = {
 	    x: e.pageX - canvas.offsetLeft,
 	    y: e.pageY - canvas.offsetTop
